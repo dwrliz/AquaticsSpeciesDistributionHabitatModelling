@@ -1288,9 +1288,9 @@ gbm.perspec(mod2.BRT, mod2.int$rank.list[1, 1], mod2.int$rank.list[1, 3], theta 
 gbm.perspec(mod2.BRT, mod2.int$rank.list[2, 1], mod2.int$rank.list[2, 3], theta = 30)
 gbm.perspec(mod2.BRT, mod2.int$rank.list[3, 1], mod2.int$rank.list[3, 3], theta = 30) 
 
-save plot if desired 
-setwd(path.figs)
-savePlot(filename = "mod9fig04.pdf", type = "pdf")
+# save plot if desired 
+# setwd(path.figs)
+# savePlot(filename = "mod9fig04.pdf", type = "pdf")
 ####### END BRT MODELS
 ###############################################################################
 
