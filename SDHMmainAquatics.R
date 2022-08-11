@@ -28,8 +28,8 @@ dat <- sf::st_transform(dat,
 # +
 
 ###Import Ancillary Visualization/Reference Data
-utah <- st_read("utah.shp") #for pretty map
-drainages_ut <- st_read("Watersheds_Area.shp") 
+utah <- st_read("/vsicurl/https://storage.googleapis.com/predictors_public/aquatics/utah.json") #for pretty map
+drainages_ut <- st_read("/vsicurl/https://storage.googleapis.com/predictors_public/aquatics/watersheds.json") 
 
 
 
