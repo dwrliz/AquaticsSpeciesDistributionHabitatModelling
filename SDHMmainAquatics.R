@@ -1,3 +1,9 @@
+# ---
+# This script requires a functions script titled "SDHMfunctions"
+# This script is designed to create ensemble species distribution models from presence point data and predictor layers
+# Written by William Wiskes 
+# Last update 8/11/2021
+# ---
 # -*- coding: utf-8 -*-
 # +
 
@@ -1460,7 +1466,7 @@ head(slsc_layer,25) #view layer
 
 
 # +
-### 3.2.6 Naïve Bayes (NB)
+### 3.2.6 NaÃ¯ve Bayes (NB)
 
 
 # +
@@ -1573,3 +1579,6 @@ mapview(slsc_layer, zcol = c("lr.class", "gam.class","max.class", "rf.class", "b
 # +
 ## 4.3 Public outreach
 ### 4.3.1 DWR-initiated; clueless here
+
+
+
