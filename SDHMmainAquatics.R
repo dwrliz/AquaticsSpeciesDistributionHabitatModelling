@@ -32,7 +32,6 @@ utah <- st_read("/vsicurl/https://storage.googleapis.com/predictors_public/aquat
 drainages_ut <- st_read("/vsicurl/https://storage.googleapis.com/predictors_public/aquatics/watersheds.json") 
 
 
-
 # +
 
 #Import predictor layer
