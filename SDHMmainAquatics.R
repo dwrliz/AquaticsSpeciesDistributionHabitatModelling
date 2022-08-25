@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 # ---
 # This script requires a functions script titled "SDHMfunctions"
 # This script is designed to create ensemble species distribution models from presence point data and predictor layers
 # Written by William Wiskes 
-# Last update 8/11/2021
+# Last update 8/25/2021
 # ---
 # -*- coding: utf-8 -*-
 # +
@@ -1288,11 +1289,13 @@ gbm.perspec(mod2.BRT, mod2.int$rank.list[1, 1], mod2.int$rank.list[1, 3], theta 
 gbm.perspec(mod2.BRT, mod2.int$rank.list[2, 1], mod2.int$rank.list[2, 3], theta = 30)
 gbm.perspec(mod2.BRT, mod2.int$rank.list[3, 1], mod2.int$rank.list[3, 3], theta = 30) 
 
+# +
 # save plot if desired 
 # setwd(path.figs)
 # savePlot(filename = "mod9fig04.pdf", type = "pdf")
-####### END BRT MODELS
+# ####### END BRT MODELS
 ###############################################################################
+# -
 
 
 ################################################################################
@@ -1384,7 +1387,7 @@ slsc_layer$brt.prob <- modFprob.BRT #add probability values to table
 head(slsc_layer,25) #view layer 
 
 # +
-##################################################
+##################################################end of script that works correctly
 # -
 
 
@@ -1450,7 +1453,9 @@ head(slsc_layer,25) #view layer
 
 
 
-
+# +
+# the issue with the code below is GLM:
+#slsc_layer$lr.prob <- mod2.pred #add probability values to table
 
 # +
 #compile allvalues
@@ -1466,7 +1471,7 @@ head(slsc_layer,25) #view layer
 
 
 # +
-### 3.2.6 NaÃ¯ve Bayes (NB)
+### 3.2.6 Naïve Bayes (NB)
 
 
 # +
