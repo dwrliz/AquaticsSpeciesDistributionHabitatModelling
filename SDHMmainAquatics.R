@@ -3,7 +3,7 @@
 # This script requires a functions script titled "SDHMfunctions"
 # This script is designed to create ensemble species distribution models from presence point data and predictor layers
 # Written by William Wiskes 
-# Last update 8/25/2021
+# Last update 8/29/2021
 # ---
 # -*- coding: utf-8 -*-
 # +
@@ -531,7 +531,8 @@ mod1.LR <- glm(easy_one,family = binomial, data = sample_subset_2)
 
 #### build initial model all variables: mod1.LR
 # hard code version
-cov_list <- colnames(stream_sample3.ng)
+#cov_list <- colnames(stream_sample3.ng)
+cov_list <- colnames(stream_sample2)
 
 # +
 
@@ -544,13 +545,13 @@ summary(mod1.LR) # full model summary stats
 # model 1 fit
 mod1.fit <- 100 * (1 - mod1.LR$deviance/mod1.LR$null.deviance) # model fit
 mod1.fit  # examine fit
-mod1.pred <- predict(mod1.LR,stream_sample3.ng, type = "response") # model prediction
+mod1.pred <- predict(mod1.LR,stream_sample2, type = "response") # model prediction
 
 # +
 #Giggle Plot
 # -
 
-mod1.LR.pred <- cbind(stream_sample3,mod1.pred)
+mod1.LR.pred <- cbind(stream_sample2,mod1.pred)
 #Create a function to generate a continuous color palette
 rbPal <- colorRampPalette(c('grey','green'))  #This adds a column of color values
 mod1.LR.pred$Col <- rbPal(10)[as.numeric(cut(mod1.LR.pred$mod1.pred,breaks = 10))]
@@ -624,10 +625,10 @@ auc.roc.plot(dat2, color = T) # basic AUC plot; pkg PresenceAbsence
 gc()
 
 
-mod2.pred <- predict(mod2.LR,stream_sample3.ng, type = "response")
+mod2.pred <- predict(mod2.LR,stream_sample2, type = "response")
 
 #Bind the predictions to the dataframe then produce map product
-mod2.LR.pred <- cbind(stream_sample3,mod2.pred)
+mod2.LR.pred <- cbind(stream_sample2,mod2.pred)
 
 #Create a function to generate a continuous color palette
 rbPal <- colorRampPalette(c('blue','green'))  #This adds a column of color values
@@ -646,7 +647,7 @@ save(mod2.LR, file="lr.Rdata")
 
 mod.cut #view probability cut for model
 
-slsc_layer <- stream_sample3 #create feauture layer format
+slsc_layer <- stream_sample2 #create feauture layer format
 slsc_layer$lr.prob <- mod2.pred #add probability values to table
 #head(slsc_layer,25) #view layer 
 
@@ -869,7 +870,7 @@ par(mfrow = c(2, 3)) # set par
 stream_sample3.ng <- stream_sample3
 stream_sample3.ng <- stream_sample3.ng[, (colnames(stream_sample3.ng) %in% substring(new, 4))]
 ##
-stream_sample3.ng <- stream_sample2
+stream_sample3.ng <- stream_sample2 
 stream_sample3.ng 
 modfin1.gam
 modfinl.GAM <- predict( modfin1.gam,stream_sample3.ng,
@@ -1012,8 +1013,11 @@ threshold(mod1.val)[[1]] # extract max kappa
 threshold(mod1.val)[[2]] # returns threshold spec_sens
 mod.cut <- threshold(mod1.val) # extract max kappa
 mod.cut # view maxent thresholds
-modF.cut$max.cut <- mod.cut$spec_sens
+#modF.cut$max.cut <- mod.cut$spec_sens
+modF.cut$max.cut <- threshold(mod1.val)[[2]]
 #optimal.thresholds(subset_covariates_1, opt.methods = 1:6) # PresenceAbsence thresholds 
+
+mod.cut
 
 # closest comparion thresholds
 mod.cut[c(1:2)] # maxent thresholds via dismo
@@ -1130,7 +1134,11 @@ mod.cut <- optimal.thresholds(dat2, opt.methods = c("PredPrev=Obs"), req.sens = 
 mod.cut # sensitivity set at 0.95
 #mod.cutK=optimal.thresholds(dat2,opt.methods=c('MaxKappa')); mod.cutK # MaxKappa option
 
+# +
 modF.cut$rf.cut <- mod.cut
+
+
+# -
 
 ################################################################################
 ######## START RESUBSTITUTION ACCURACY CALCULATIONS, MODEL=RF
@@ -1138,6 +1146,7 @@ modF.cut$rf.cut <- mod.cut
 modl <- "mod1.RF" # add var to keep track of model
 dat2 <- cbind(modl, dat1[1], mod1.pred) # build dataframe w/mod1 predictions
 head(dat2, 2) # examine prediction dataframe 
+
 
 # determine best threshold using PresenceAbsence package Sec7.1
 #   see help(optimal.thresholds) for more info
@@ -1454,7 +1463,7 @@ head(slsc_layer,25) #view layer
 
 
 # +
-# the issue with the code below is GLM:
+# the issue with the code below is:
 #slsc_layer$lr.prob <- mod2.pred #add probability values to table
 
 # +
@@ -1520,13 +1529,18 @@ slsc_layer$Ensemble_ave <-  ((slsc_layer$lr.prob.std+
                                 slsc_layer$brt.prob.std)/5)
 
 
-apply mod cuts to slsc_layer
-
-
 slsc_layer$lr.class <- ifelse(slsc_layer$lr.prob >modF.cut$LR.cut$mod2.pred, 1, 0)
+modF.cut$LR.cut$mod2.pred
+
+
 slsc_layer$gam.class <- ifelse(slsc_layer$gam.prob >modF.cut$gam.cut$modfinl.pred, 1, 0)
+modF.cut$gam.cut$modfinl.pred
+
 slsc_layer$max.class <- ifelse(slsc_layer$max.prob >modF.cut$max.cut, 1, 0)
+modF.cut$max.cut
+
 slsc_layer$rf.class <- ifelse(slsc_layer$rf.prob >modF.cut$rf.cut$mod1.pred, 1, 0)
+
 slsc_layer$brt.class <- ifelse(slsc_layer$brt.prob >modF.cut$BRT.cut$cvpred, 1, 0)
 
 
@@ -1540,20 +1554,20 @@ slsc_layer <- slsc_layer %>%
 library(sf)
 
 # +
-st_write(pts_snap.mcpsf,  "gis_layers/mcp_polygon.shp", 
+st_write(pts_snap.mcpsf,  "mcp_polygon.shp", 
          delete_dsn=FALSE, 
          update = TRUE )
-st_write(stream_sample3$geometry,  "gis_layers/stream_sample3.shp", 
+st_write(stream_sample3$geometry,  "stream_sample3.shp", 
          delete_dsn=FALSE, 
          update = TRUE, layer_options = "OVERWRITE=yes" )
-st_write(slsc_layer,  "gis_layers/ybcfinal.shp", delete_dsn=FALSE, update = TRUE, , layer_options = "OVERWRITE=true")
-st_write(tryme3[,"presabs"],  "gis_layers/presabs.shp", 
+st_write(slsc_layer,  "ybcfinal.shp", delete_dsn=FALSE, update = TRUE, , layer_options = "OVERWRITE=true")
+st_write(tryme3[,"presabs"],  "presabs.shp", 
          delete_dsn=FALSE, 
          update = TRUE )
-st_write(stream_sample_huc,  "gis_layers/stream_sample_huc.shp", 
+st_write(stream_sample_huc,  "stream_sample_huc.shp", 
          delete_dsn=FALSE, 
          update = TRUE )
-st_write(pts_snap_sf,  "gis_layers/presence_points.shp", 
+st_write(pts_snap_sf,  "presence_points.shp", 
          delete_dsn=FALSE, 
          update = TRUE )
 
@@ -1561,6 +1575,7 @@ st_write(pts_snap_sf,  "gis_layers/presence_points.shp",
 library(mapview)
 # -
 
+library("mapview")
 mapview(slsc_layer, 
         zcol = c("Ensemble_ave"), map.types = c("Esri.WorldImagery", "OpenTopoMap"))
 
