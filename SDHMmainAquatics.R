@@ -1396,73 +1396,6 @@ slsc_layer$brt.prob <- modFprob.BRT #add probability values to table
 head(slsc_layer,25) #view layer 
 
 # +
-##################################################end of script that works correctly
-# -
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# +
 # the issue with the code below is:
 #slsc_layer$lr.prob <- mod2.pred #add probability values to table
 
@@ -1480,7 +1413,7 @@ head(slsc_layer,25) #view layer
 
 
 # +
-### 3.2.6 Naïve Bayes (NB)
+### 3.2.6 Naï¿½ve Bayes (NB)
 
 
 # +
@@ -1572,33 +1505,28 @@ st_write(pts_snap_sf,  "presence_points.shp",
          update = TRUE )
 
 
-library(mapview)
-# -
 
 library("mapview")
-mapview(slsc_layer, 
-        zcol = c("Ensemble_ave"), map.types = c("Esri.WorldImagery", "OpenTopoMap"))
+library("leaflet")
 
-mapview(slsc_layer, zcol = "concordance", 
-        map.types = c("Esri.WorldImagery", "OpenTopoMap")) 
+points <- pts_snap_sf %>% st_transform(crs = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
+points <- st_coordinates(points)
 
-mapview(slsc_layer, zcol = c("lr.class", "gam.class","max.class", "rf.class", "brt.class"), map.types = c("Esri.WorldImagery", "OpenTopoMap"))+pts_snap_sf$geometry
-
-
-# +
-### Subsection Outputs
-
+lines <- slsc_layer %>% st_transform(crs = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
+# lines <- st_coordinates(points)
 
 # +
-#  4 SDHM IMPLEMENTATION
+# pal <- colorNumeric(c("#0C2C84", "#41B6C4", "#FFFFCC"), values(slsc_layer),
+#                     na.color = "transparent")
 
-# +
-## 4.2 DWR and cooperator general management and conservation goals
-### 4.2.1 DWR-initiated; clueless here
+map <- leaflet(data = points) %>% addTiles() %>%
+  addMarkers() %>%
+  addPolylines(data = lines)
+# # -
 
-# +
-## 4.3 Public outreach
-### 4.3.1 DWR-initiated; clueless here
+mapshot(map, "ensemble.html")
+
+map
 
 
 
