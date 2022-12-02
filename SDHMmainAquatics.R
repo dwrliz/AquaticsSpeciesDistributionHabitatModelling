@@ -1503,7 +1503,7 @@ st_write(stream_sample_huc,  "stream_sample_huc.shp",
 st_write(pts_snap_sf,  "presence_points.shp", 
          delete_dsn=FALSE, 
          update = TRUE )
-
+st_write(lines, "ensemble.geojson")
 
 
 library("mapview")
