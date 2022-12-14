@@ -537,7 +537,6 @@ plot(tryme$geometry, add = TRUE, col = "orange")
 
 save(mod2.LR, file="lr.Rdata")
 # save plot if desired 
-#setwd(path.figs)
 #savePlot(filename = "LR_pred.pdf", type = "pdf")
 ######## END RESUBSTITUTION ACCURACY CALCULATIONS, MODEL=LOGISTIC GLM
 ################################################################################
@@ -550,7 +549,7 @@ slsc_layer$lr.prob <- mod2.pred #add probability values to table
 
 # +
 
-##Generalized Linear Model
+##End Generalized Linear Model
 # -
 
 library(gam)
@@ -560,19 +559,6 @@ library(gam)
 # some scatterplot of remote sensing-based variables
 plot(subset_covariates_1[2:20]) # simple data scatterplots
 
-# +
-# NOTE: car package has great graphs BUT conflicts w/plots of gam models
-#  if load car MUST start new R session to use plots of gam models
-#   conversely, run library car in new R window and build plots there
-#  even detach(package:car) does not solve this; a true R bug ...
-# library(car)  # NOT RUN; fancy scatterplot w/lines if desired
-# scatterplotMatrix(dat1[2:6], main = "Scatterplots of RS data")  # scatterplot
-
-# +
-
-####### END SOME PRELIMINARY FIGURES
-###############################################################################0
-# -
 
 mod.form(subset_covariates_1, 1, 2)
 
@@ -583,8 +569,6 @@ mod0.GAM <- glm(easy_one, family = binomial, data = sample_subset_2)
 
 
 summary(mod0.GAM) # model #0 summary
-
-
 
 # +
 
@@ -654,16 +638,6 @@ mod1.GAM <- gam(formatGam(sample_subset_2), family = binomial, data = sample_sub
 #summary(mod1.GAM) # model #1 summary
 summary(mod2.LR)
 
-
-
-# +
-# # GAM model 2: all smoothers using specified df (smoothers=5)
-# date()
-# mod2.GAM <- gam(easy_one3, family = binomial, data = sample_subset_2)
-# date()
-# summary(mod2.GAM) # model #2 summary 
-
-# +
 # ###############################################################################
 # ####### START FINAL GAM MODEL OUTPUT
 # #build GAM parameter table output; mod2.GAM chosen based on fit / accuracies
@@ -750,12 +724,6 @@ par(mfrow = c(2, 3)) # set par
 # +
 # plot(modfin1.gam, ask = T) # interactive graphs
 
-
-# +
-
-####### START FINAL GAM MODEL OUTPUT
-###############################################################################
-
 # +
 ################################################################################
 ######## START PREDICTION & RECLASSIFICATION OF FINAL GAM MODEL
@@ -800,9 +768,11 @@ mod.cut #view probability cut for model
 slsc_layer <- stream_sample2 #create feauture layer format
 slsc_layer$gam.prob <- modfinl.GAM.pred$modfinl.GAM #add probability values to table
 #head(slsc_layer,25) #view layer 
+#End GAM
+
 
 # +
-### 3.2.2 Entropy models (MAXENT)
+### Maximum Entropy model (MAXENT)
 
 # +
 
@@ -841,24 +811,17 @@ easy_one5<-mod.form4(subset_covariates_1,2) #grab preds only(start on column 2)
 
 max.preds <- pres.tr[,c(easy_one5)]
 
-
 mod1.MAX <- maxent( max.preds, #training data (pred.dom)
                     pa)        #presabs vector (pres.tr)
 
-# DEPENDING ON SYSTEM:  
-#  typing "mod1.MAX" in R redirects output to browser
-# OR
-#  browser automatically opens
 mod1.MAX
 
 plot(mod1.MAX) # var importance plot
 # save plot if desired 
-#setwd(path.figs)
 #savePlot(filename = "mod7fig01.pdf", type = "pdf")
 
 response(mod1.MAX) # prediction vs. var plot
 # save plot if desired 
-# setwd(path.figs)
 # savePlot(filename = "mod7fig02.pdf", type = "pdf")
 
 #### NOT RUN; assessment if desire maxent assessment only
@@ -920,11 +883,6 @@ mod.cut
 mod.cut[c(1:2)] # maxent thresholds via dismo
 #optimal.thresholds(subset_covariates_1, opt.method = 3) # PresenceAbsence thresholds   
 
-# +
-#################
-#################this is the problem code section
-# -
-
 mod1.cfmat <- table(subset_covariates_1[[1]], factor(as.numeric(dat2$modfinl.pred >= mod.cut$spec_sens)))
 mod1.cfmat # examine
 
@@ -939,13 +897,9 @@ mod1.acc[c(1, 4:5, 7:8)] # examine accuracies
 # plotting AUC
 auc.roc.plot(dat2, color = T) # basic AUC plot; pkg PresenceAbsence
 # save plot if desired 
-#setwd(path.figs)
 #savePlot(filename = "mod7fig03.pdf", type = "pdf")
 ######## END  MAXENT MODEL #1: TRUE PRESENCE ONLY DATA
-################################################################################
 
-
-################################################################################
 ######## START SPATIAL PREDICTION & CLASSIFICATION
 # NOT RUN:  mod1 spatial prediction
 mod1.MAXprob = predict(mod1.MAX, st_drop_geometry(stream_sample3.ng)) # predict entire model domain
@@ -964,26 +918,17 @@ plot(tryme, add = TRUE, col = "yellow")
 plot(mod1.MAXprob$geometry,col = mod1.MAXprob$Col)
 plot(tryme, add = TRUE, col = "yellow")
 
-
 save(mod1.MAX, file="maxent.Rdata")
 
 ###Construct Feature Table
 mod.cut #view probability cut for model
 
 slsc_layer$max.prob <- mod1.MAXprob$mod1.MAXprob #add probability values to table
-#####################end maxent
+
+# End Maxent
 
 
 # +
-### 3.2.3 Classification-like models (CT, MDA)
-### 3.2.4 Machine learning models (NNET, GARP)
-
-# +
-### 3.2.5 Averaging models (Random Forest, BRT)
-
-
-# +
-##############################################################
 # Random Forest Model
 # -
 
@@ -1002,31 +947,18 @@ mod.form <- function(dat ,r.col, p.col) {
   pred <- colnames(dat[c(p.col:n.col)]) # assign preds column names
   mod.formula <- as.formula(paste(resp, "~", paste(pred, collapse = "+"))) # build formula 
 }
-######## END INITIALIZATION
-################################################################################
-
-# +
-###############################################################################
-####### START RF MODEL #1
-# RF model 1
-# -
-
+#run model
 mod1.RF <- randomForest(mod.form(subset_covariates_1, 1, 2), importance = T, 
                         keep.forest = T, data = subset_covariates_1) # RF model w/mod.form fxn
 
 mod1.pred <- predict(mod1.RF, type = "prob")[, 2] # predict from model
-#head(mod1.pred) # examine 
-######## END RF MODEL #1
-################################################################################
 
 modl <- "mod1.RF" # add var to keep track of model
 dat2 <- cbind(modl, dat1[1], mod1.pred) # build dataframe w/mod1 predictions
 head(dat2, 2) # examine prediction dataframe 
 
-# determine best threshold using PresenceAbsence package Sec7.1
-#   see help(optimal.thresholds) for more info
-#library(PresenceAbsence) # PresenceAbsence for accuracy metrics
-#help(optimal.thresholds) # options for optimizing threshold
+# determine best threshold using PresenceAbsence package 
+
 mod.cut <- optimal.thresholds(dat2, opt.methods = c("PredPrev=Obs"), req.sens = 0.95)
 mod.cut # sensitivity set at 0.95
 #mod.cutK=optimal.thresholds(dat2,opt.methods=c('MaxKappa')); mod.cutK # MaxKappa option
@@ -1034,20 +966,15 @@ mod.cut # sensitivity set at 0.95
 # +
 modF.cut$rf.cut <- mod.cut
 
-
 # -
 
-################################################################################
-######## START RESUBSTITUTION ACCURACY CALCULATIONS, MODEL=RF
 # build testing dataframe using model #1 predictions
 modl <- "mod1.RF" # add var to keep track of model
 dat2 <- cbind(modl, dat1[1], mod1.pred) # build dataframe w/mod1 predictions
 head(dat2, 2) # examine prediction dataframe 
 
 
-# determine best threshold using PresenceAbsence package Sec7.1
-#   see help(optimal.thresholds) for more info
-#library(PresenceAbsence) # PresenceAbsence for accuracy metrics
+# determine best threshold using PresenceAbsence 
 #help(optimal.thresholds) # options for optimizing threshold
 mod.cut <- optimal.thresholds(dat2, opt.methods = c("PredPrev=Obs"), req.sens = 0.95)
 mod.cut$pred # sensitivity set at 0.95
@@ -1067,16 +994,7 @@ auc.roc.plot(dat2, color = T) # basic AUC plot; pkg PresenceAbsence
 
 # +
 # save plot if desired 
-# setwd(path.figs)
 # savePlot(filename = "mod8fig04.pdf", type = "pdf")
-####### END RESUBSTITUTION ACCURACY CALCULATIONS, MODEL=RF
-###############################################################################
-
-
-# +
-##PLot RF model
-# -
-
 
 gc()
 
@@ -1109,7 +1027,6 @@ head(slsc_layer,5) #view layer
 
 
 # +
-#####################################################################
 # Boosted Regression Trees Model
 # -
 
@@ -1120,53 +1037,36 @@ library(gbm)
 #library(PresenceAbsence)
 
 # +
-###############################################################################
 ####### START INITIALIZATION
 # -
 
 dat3 <- as.data.frame(subset_covariates_1)
 
 
-# BRT model formulation !! WARNING !! resp for datasets in col=4
-dat3 <- na.omit(dat3) # remove NAs - BRT not picky but drop 'em anyway
+# BRT model formulation, resp for datasets in col=4
+dat3 <- na.omit(dat3) # remove NAs 
 resp <- paste("as.factor(", colnames(dat3[1]), ")", sep = "") # assign resp to col number
 n.col <- ncol(dat3) # number of columns
 pred <- (2:n.col) # assign predictors to column numbers 
 
-
-# +
-####### END INITIALIZATION
-###############################################################################
-# -
-
-###############################################################################
 ####### START BRT MODELS
 library(gbm) # load gbm package for BRT
 library(dismo) # for BRT calls per Elith et al (2008) JAnimalEcol 77:802-813
 
-# basic BRT model - example with warning
-#   CPU time contingent on LR & TC;  ~30-35 min runtime w/LR=0.0001
-date() # start time stamp
+# basic BRT model
 mod1.BRT <- gbm.step(data = dat3, gbm.x = pred, gbm.y = 1, family = "bernoulli",
                      tree.complexity = 15, learning.rate = 1e-04, bag.fraction = 0.75, n.folds = 10, 
                      n.trees = 5000, plot.main = TRUE, keep.fold.fit = TRUE) 
 # save NT plot if desired 
-#setwd(path.figs)
 #savePlot(filename = "mod9fig01.pdf", type = "pdf")
-date() # stop time stamp
 
-date() # start time stamp
 # basic BRT model - LR adjusted up (ie faster)
-#   CPU ~20 min runtime w/LR=0.01
-#   CPU ~5 min runtime w/LR=0.1
 mod2.BRT <- gbm.step(data = dat3, gbm.x = pred, gbm.y = 1, family = "bernoulli", 
                      tree.complexity = 10, learning.rate = 0.001, bag.fraction = 0.75, n.folds = 5, 
                      plot.main = TRUE, keep.fold.fit = TRUE,n.trees = 100)
-date() # stop time stop
 
 # +
 # save NT plot if desired 
-# setwd(path.figs)
 # savePlot(filename = "mod9fig02.pdf", type = "pdf")
 # -
 
@@ -1181,7 +1081,6 @@ par(mfrow = c(3, 4))
 gbm.plot(mod2.BRT, n.plots = 10) # response:predictor plots 
 par(mfrow = c(1, 1))
 # save plot if desired 
-#setwd(path.figs)
 #savePlot(filename = "mod9fig03.pdf", type = "pdf")
 
 # search for & examine interactions
@@ -1197,14 +1096,10 @@ gbm.perspec(mod2.BRT, mod2.int$rank.list[3, 1], mod2.int$rank.list[3, 3], theta 
 
 # +
 # save plot if desired 
-# setwd(path.figs)
 # savePlot(filename = "mod9fig04.pdf", type = "pdf")
-# ####### END BRT MODELS
-###############################################################################
+# ####### END BRT MODEL
 # -
 
-
-################################################################################
 ######## START ACCURACY CALCULATIONS, MODEL=BRT
 # build testing dataframe using model predictions
 modl <- "mod2.BRT" # add var to keep track of model
@@ -1216,8 +1111,6 @@ head(dat2, 2) # examine prediction dataframe
 
 
 # determine best threshold using PresenceAbsence package
-#   see help(optimal.thresholds) for more info
-#library(PresenceAbsence)  # PresenceAbsence for accuracy metrics
 mod.cut <- optimal.thresholds(dat2, opt.methods = c("ObsPrev")) # threshold=PREVALENCE
 mod.cut # examine
 #mod.cut2 <- optimal.thresholds(dat2, opt.methods = c("MaxKappa")) # MaxKappa option
@@ -1246,10 +1139,8 @@ brt.predvals <- dat2 %>%
 
 # +
 # save plot if desired 
-# setwd(path.figs)
 # savePlot(filename="mod9fig05.tiff",type="tiff")
-####### END ACCURACY CALCULATIONS, MODEL=RF
-###############################################################################
+
 # -
 
 brt.predvals
@@ -1274,7 +1165,6 @@ brt.predvals
 # BRT prediction and classification
 # -
 
-
 modFprob.BRT <- predict(mod1.BRT, stream_sample2, n.trees = 100, 
                         type = "response", filename = "modFprob.BRT.img", overwrite = T) # prob map
 
@@ -1293,10 +1183,6 @@ slsc_layer$brt.prob <- modFprob.BRT #add probability values to table
 head(slsc_layer,25) #view layer 
 
 # +
-# the issue with the code below is:
-#slsc_layer$lr.prob <- mod2.pred #add probability values to table
-
-# +
 #compile allvalues
 slsc_layer <- stream_sample2 #create feauture layer format
 slsc_layer$lr.prob <- mod2.pred #add probability values to table
@@ -1307,21 +1193,11 @@ slsc_layer$brt.prob <- modFprob.BRT #add probability values to table
 
 head(slsc_layer,25) #view layer 
 
-
-
 # +
-### 3.2.6 Na�ve Bayes (NB)
-
-
-# +
-### Subsection Outputs
-
-# +
-## 3.3 Build Ensemble Models
+## Build Ensemble Models
 
 # +
 
-################################################################################
 ######## START ENSEMBLE PROCESS
 # load probability & classified maps; create stacks
 #library(raster)
@@ -1345,7 +1221,6 @@ for (i in 1:length(prob.dom)) {
 m2.5 <-paste(m2.5, "std", sep = ".")   #add abbreviation to names "std"
 colnames(layers) <- m2.5
 # -
-
 
 colnames(layers) <- c("lr.prob.std","gam.prob.std","max.prob.std","rf.prob.std","brt.prob.std")
 #m2.5  #assign column names to scaled prob values
@@ -1390,7 +1265,7 @@ st_write(pts_snap.mcpsf,  "mcp_polygon.shp",
 st_write(stream_sample3$geometry,  "stream_sample3.shp", 
          delete_dsn=FALSE, 
          update = TRUE, layer_options = "OVERWRITE=yes" )
-st_write(slsc_layer,  "ybcfinal.shp", delete_dsn=FALSE, update = TRUE, , layer_options = "OVERWRITE=true")
+st_write(slsc_layer,  "ybcfinal.shp", delete_dsn=FALSE, update = TRUE, layer_options = "OVERWRITE=true")
 st_write(tryme3[,"presabs"],  "presabs.shp", 
          delete_dsn=FALSE, 
          update = TRUE )
@@ -1412,11 +1287,6 @@ points <- pts_snap_sf %>% st_transform(crs = '+proj=longlat +ellps=WGS84 +datum=
 points <- st_coordinates(points)
 
 lines <- slsc_layer %>% st_transform(crs = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
-# lines <- st_coordinates(points)
-
-# +
-# pal <- colorNumeric(c("#0C2C84", "#41B6C4", "#FFFFCC"), values(slsc_layer),
-#                     na.color = "transparent")
 
 map <- leaflet(data = points) %>% addTiles() %>%
   addMarkers() %>%
