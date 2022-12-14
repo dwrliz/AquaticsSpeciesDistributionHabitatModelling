@@ -3,19 +3,17 @@
 # This script requires a functions script titled "SDHMfunctions"
 # This script is designed to create ensemble species distribution models from presence point data and predictor layers
 # Written by William Wiskes 
-# Last update 11/10/2021
+# Last update 12/10/2022
 # ---
 # -*- coding: utf-8 -*-
 # +
 
-#Load Library
 library(sp)
 library(sf)
 library(rgdal)
 library(terra)
 library(tidyverse)
 library(dplyr)
-
 library(tinytex)
 set.seed(1234)
 
@@ -23,117 +21,71 @@ set.seed(1234)
 
 #UTM Nad 83 (for point data)
 prj.utmN83z12 <- "+proj=utm +zone=12 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
-# https://epsg.io/42303  (5070)use this one
+# https://epsg.io/42303  (5070)
 prj.aeaN83 <- "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"  # epsg:42303
 
-
-
+#load data
 dat <-st_read("Heritage_So_Leatherside_Chub_ce.shp")
-dat <- sf::st_transform(dat, 
-                        crs = prj.aeaN83)
+dat <- sf::st_transform(dat,crs = prj.aeaN83)
 
 # +
 
 ###Import Ancillary Visualization/Reference Data
-utah <- st_read("/vsicurl/https://storage.googleapis.com/predictors_public/aquatics/utah.json") #for pretty map
-drainages_ut <- st_read("/vsicurl/https://storage.googleapis.com/predictors_public/aquatics/watersheds.json") 
-
-
-# +
-
+utah <- st_read("/vsicurl/https://storage.googleapis.com/predictors_public/aquatics/utah.json") #state lines
+drainages_ut <- st_read("/vsicurl/https://storage.googleapis.com/predictors_public/aquatics/watersheds.json") #watersheds
 #Import predictor layer
 streams_att <- st_read("/vsicurl/https://storage.googleapis.com/predictors_public/aquatics/aquatics_cleaned.json")  
-#streams_att <- st_read("data/gis_layers/streams_pred.shp")
-
-
 
 # +
-
-utah <- sf::st_transform(utah, 
-                         crs = prj.aeaN83)
-streams_sf <- sf::st_transform(streams_att, 
-                               crs = prj.aeaN83)
-drainages_sf <- sf::st_transform(drainages_ut, 
-                                 crs = prj.aeaN83)
-st_transformdrainages_sf <- sf::st_transform(drainages_ut, 
-                                             crs = prj.aeaN83)
+#transform the data
+utah <- sf::st_transform(utah, crs = prj.aeaN83)
+streams_sf <- sf::st_transform(streams_att, crs = prj.aeaN83)
+drainages_sf <- sf::st_transform(drainages_ut, crs = prj.aeaN83)
+st_transformdrainages_sf <- sf::st_transform(drainages_ut, crs = prj.aeaN83)
 
 # -
-
-####################################################################
-####################################################################
-#data preparations
-####################################################################
-# Rename column by name: change "beta" to "two"
+# Rename columns
 names(drainages_sf)[names(drainages_sf)=="HUC_12"] <- "huc12"
 names(drainages_sf)
-#replace streams_sf with the merged database that includes huc names
+#merge the data
 streams_sf <- st_join(streams_sf,drainages_sf,by = "huc12")
-####################################################################
-#End Data merge
-####################################################################
 
 # +
-#WAY TO TEST EQUALITY FOR PROJ4 IN FUTURE WILL PUT IN EPSG
-##all.equal(st_crs(drainages_ut)$proj4string,st_crs(streams_sf)$proj4string)
-#verify CRS of transform
-
-
-# +
-
+#optional - plot the data
 plot(sf::st_geometry(streams_sf), col= "dodgerblue", main = "Species Presence locations")
 plot(sf::st_geometry(utah) , border = "black", lwd =2, add = TRUE)
 plot(sf::st_geometry(dat), pch=17,col= "green", add = TRUE)
 
 
 # +
-### 2.1.5.a Point correction
-# -
-
-
-
-# +
-
-###2.1.6 Point Correction
-##########################################################
-##########################################################
-#  Point Correction
-#   moves points to respective stream polyline
-#   ensure all layers are in common crs
+# Point Correction - moves points to respective stream polyline
+# Please ensure all layers are in common crs
 ##########################################################
 library(maptools)
 library(rgeos)
 
-# +
-# streams_sp <- as_Spatial(streams_sf) #convert to SpatialPoint
-# pts.outSP <- as_Spatial(dat) 
-
-#################start testing
 streams_sf <- streams_sf[ ! st_is_empty( streams_sf ) , ]
 streams_sp <- as_Spatial(streams_sf) #convert to SpatialPoint
 dat <- dat[ ! st_is_empty( dat ) , ]
 pts.outSP <- as_Spatial(dat) 
-#####################end testing
+
 # -
 
-#crs(streams_sp)
-#crs(pts.outSP)
+#point snap, cont.
 pts_snap<-snapPointsToLines(pts.outSP,    #The object(points) to be 
                             #corrected
                             streams_sp,   #The nhd streams sp object
-                            maxDist=2000) #The maxmimum distance a point 
-#can be moved.  
+                            maxDist=2000) #The maxmimum distance a point can be moved.  
 pts_snap_sf <-sf::st_as_sf(pts_snap)              
-#The snapped point object being converted back to an sf object.
-#                 coords = station@coords, 
-#                 crs = prj.utmN83z12, 
-#                remove = F)
+
 pts_snap_sf<- sf::st_transform(pts_snap_sf, 
                                crs = prj.aeaN83)
-##2.3 Species Data Organization
-##2.3.1 Establish SDHM output resolution 
+
+
+##Species Data Organization
+#1 Establish SDHM output resolution 
 streams_pts_sgbp <-st_intersects(streams_sf,            
-                                 #The polyline(stream layer in this case)
+                                 #The polyline - stream layer in this case
                                  st_buffer(pts_snap_sf, 
                                            #applying a buffer to the snapped points.
                                            dist = 200), 
@@ -157,8 +109,6 @@ plot(stream_presence$geometry,col = "dodgerblue", main = "Corrected/Transformed 
 plot(utah$geometry, add = TRUE)
 
 # +
-
-###2.3.3
 ##########MODELING DOMAIN AND BOUNDING BOX DEVELOPEMENT
 ### Create MCP
 pts_snap.mcpsf <- sf::st_convex_hull(sf::st_union(pts_snap_sf))
@@ -195,7 +145,7 @@ plot(stream_sample_huc$geometry)
 
 # +
 
-#THIS IS THE MODELING DOMAIN WE CHOSE 
+#modelling domain
 plot(utah$geometry, main = "MCP Vs HUC 10 Modeling Domain")
 plot(streams_sf$geometry)
 plot(stream_sample_huc$geometry, add = TRUE)
@@ -209,12 +159,11 @@ plot(pts_snap_sf, add = TRUE, pch = 18, col = "red")
 
 # +
 
-###2.3.4
 ## Generate Presence/Pseud-Absences data frame
 ##################################################################
 # -
 
-#new code with drainage huc selection by mcp
+#drainage huc selection by mcp
 sample <- st_covered_by( streams_sf, stream_sample_huc)
 streams_frame <- lengths(sample)> 0   
 #Takes the sgbp list and removes segments that do not intersect
@@ -242,10 +191,7 @@ plot(stream_sample_huc$geometry,main = " Presence/Absence Stream Segments",
 #plot(pts_snap.mcpsf, col=rgb(red=1.0, green=0.2, blue=.50, alpha=0.2), add = TRUE)
 plot(stream_sample2$geometry, col = "dodgerblue",add= TRUE, lwd= .5 )
 plot(stream_presence$geometry, col = "yellow", add = TRUE, lwd = 1)
-#MAY ADD A INDIVIDUAL DRAINAGE TRANSPARENT LAYER
-#rm(stream_sample)
-#gc()
-#data frame merge
+
 #assigns a 1 to segments that are present
 tryme <-stream_presence %>%
   mutate(presabs = 1)
@@ -280,21 +226,13 @@ nrow(tryme)
 
 
 # +
-
-###2.3.5 Construct the SDHM training data frame
+##Construct the SDHM training data frame
 #build database of presence/absences
 tryme3 <- rbind(tryme, sample.pseudo)
 nrow(tryme3) #ensure number of rows equals that from above
 
 # +
-######################################################################
-#end database construction
-##########
 
-# +
-
-######################################################################
-######################################################################
 #   Data Exploration and covariate developement
 ######################################################################
 # -
@@ -318,7 +256,7 @@ sample_subset_22<-cbind(st_drop_geometry(presabs),st_drop_geometry(tester))
 
 
 options (warn = - 1)
-###############################################################################
+
 ######## START CORRELATIONS AMONG TOPO PREDICTORS
 # numeric correlations
 cut.point <- 0.7 # set cutpoint for correlation
@@ -329,8 +267,7 @@ c2 <- subset(c1 > cut.point | c1 < -cut.point) # matrix of cor>cutpoint
 #c2 # examine; FALSE indicates cor<cutpoint 
 
 # START MODIFIED panel.cor CORRELATION FUNCTION		   
-#   determine correlations among predictor variables: modified from 
-#   http://addictedtor.free.fr/graphiques/graphcode.php?graph=137
+# determine correlations among predictor variables
 panel.cor <- function(x, y, digits=2, prefix="", cex.cor) 
 { usr <- par("usr"); on.exit(par(usr)) 
 par(usr = c(0, 1, 0, 1)) 
@@ -352,13 +289,8 @@ text(.8, .8, Signif, cex=cex, col=2)
 #png(filename = "Variable Assmt", width = 1000, height = 1000) 
 pairs(st_drop_geometry(tryme3[, c(20:30)]), lower.panel = panel.smooth, 
       upper.panel = panel.cor, main = "Variable Correlation Assessment") 
-#dev.off()
-#######################################################################
-#exploration
-#######################################################################
 
-
-#### START function variable importance
+#### Generalized Linear Model GLM
 varimp.glm <- function(tr.spp, tr.var, pres, pf, pl) {
   tmp.mat <- matrix(ncol = 2, nrow = (pl - pf + 1))
   for (i in pf:pl) {
@@ -386,33 +318,13 @@ v.start <- 2 # column start predictor variables
 v.stop <- ncol(tr.vip) # last column predictor variables
 v.num <- v.stop - 8 # number predictor variables
 
-
-# +
-#######################################################################
-#######################################################################
-########################################################################
-#this is my problem line! help me
-#############################################
-#############################################
-##############################################
-###############################################
-
 dev.fit <- varimp.glm(tr.vip, tr.vip, pres, v.start, v.stop)# call VIP function
 
-# +
-#dev.fit <- dev.fit[-146,]#this line fixes my plot but why
-###############################################################
-################################################################
-################################################################
-# -
-
-#names wont work because 146 was removed
 # built basic barplot if desired
 d.max <- ceiling(signif(max(dev.fit[, 2]), 2) * 10)/10 # max of y-axis
 ylim.r <- range(0, d.max) # range y-axis
 
-x.labs <- names(tr.vip[,2:ncol(tr.vip)]) # x-axis labels THe minus 1 removes the second geometry!
-
+x.labs <- names(tr.vip[,2:ncol(tr.vip)]) # x-axis labels the minus 1 removes the second geometry
 
 
 # +
@@ -423,8 +335,6 @@ barplot(dev.fit[, 2], col = "grey", ylim = ylim.r, main = "VIPs",
 abline(h = 0) # add horizontal line
 abline(mean(dev.fit[, 2]), 0, lt = 3) # ref lines; dash=mean adj.dev 
 #dev.off()
-
-
 
 # +
 
@@ -456,8 +366,6 @@ barplot(predictors_vimp$col3, col = "dodgerblue", ylim = ylim.r, main = "VIPs",
 #abline(h = 0) # add horizontal line
 abline(mean(predictors_vimp[, 3]), 0, lt = 3) # ref lines; dash=mean adj.dev
 
-
-
 # +
 
 #png(filename = "vip.png", width = 550, height = 400)
@@ -469,7 +377,6 @@ abline(h = 0) # add horizontal line
 abline(mean(predictors_vimp[, 3]), 0, lt = 3) # ref lines; dash=mean adj.dev
 #dev.off()  
 
-
 # +
 
 cov_names <- unique(predictors_vimp$preds)# use highest importance variables
@@ -480,10 +387,6 @@ st_write(subset_covariates_1,  "covariates1.shp",
          delete_dsn=FALSE, 
          update = TRUE, 
          driver = "ESRI Shapefile")
-
-# +
-#writeOGR(as_Spatial(subset_covariates_1), ".", "data/gis_layers/subsetcovarR", driver="ESRI Shapefile")
-# -
 
 #database without presence absence
 stream_sample3 <-complete_frame_streams[,cov_names]
@@ -497,7 +400,6 @@ stream_sample3.ng <- stream_sample3
 library(PresenceAbsence)  # fxns: optimal.thresholds, presence.absence.accuracy, 
 #       auc.roc.plot
 library(DAAG) 
-
 
 library(pander)
 Type <- c("Parametric", "Semi-parametric", "Machine Learning", "Machine Learning", "Machine Learning")
@@ -522,7 +424,7 @@ easy_one <-mod.form(subset_covariates_1,1,2)
 # +
 
 ################################################################################
-######## START MODEL #1 => FULL MODEL, ALL VARS INCLUDED
+######## START GLM MODEL #1 => FULL MODEL, ALL VARS INCLUDED
 # -
 
 dat1 <-sample_subset_2
@@ -592,18 +494,13 @@ summary(mod2.LR) # reduced model summary
 
 
 ######## END MODEL #2 
-################################################################################
-################################################################################
+
 ######## START RESUBSTITUTION ACCURACY CALCULATIONS, MODEL=LOGISTIC GLM
-# requires pkg PresenceAbsence
 #   build testing dataframe using mod2 predictions
 modl <- "mod2.LR" # add var to keep track of model
 dat2 <- cbind(modl, dat1[1], mod2.pred) # build dataframe w/mod2 predictions
 head(dat2, 20) # examine prediction dataframe
 
-# determine best threshold using PresenceAbsence package Sec7.1
-#library(PresenceAbsence) # PresenceAbsence for accuracy metrics
-# help(optimal.thresholds) # options for optimizing threshold
 mod.cut <- optimal.thresholds(dat2, opt.methods = c("ObsPrev")) # default threshold=0.5
 mod.cut # examine threshold=DEFAULT of 0.5
 modF.cut <- numeric(0)
@@ -1503,7 +1400,9 @@ st_write(stream_sample_huc,  "stream_sample_huc.shp",
 st_write(pts_snap_sf,  "presence_points.shp", 
          delete_dsn=FALSE, 
          update = TRUE )
-st_write(lines, "ensemble.geojson")
+st_write(lines, "ensemble.geojson", 
+         delete_dsn=FALSE, 
+         update = TRUE )
 
 
 library("mapview")
