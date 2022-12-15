@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
+
 # ---
 # This script requires a functions script titled "SDHMfunctions"
 # This script is designed to create ensemble species distribution models from presence point data and predictor layers
 # Written by William Wiskes 
 # Last update 12/10/2022
 # ---
-# -*- coding: utf-8 -*-
-# +
 
 library(sp)
 library(sf)
@@ -17,7 +15,6 @@ library(dplyr)
 library(tinytex)
 set.seed(1234)
 
-# -
 
 #UTM Nad 83 (for point data)
 prj.utmN83z12 <- "+proj=utm +zone=12 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"
