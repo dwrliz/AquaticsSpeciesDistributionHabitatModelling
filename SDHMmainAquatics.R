@@ -1275,10 +1275,6 @@ st_write(stream_sample_huc,  "stream_sample_huc.shp",
 st_write(pts_snap_sf,  "presence_points.shp", 
          delete_dsn=FALSE, 
          update = TRUE )
-st_write(lines, "ensemble.geojson", 
-         delete_dsn=FALSE, 
-         update = TRUE )
-
 
 library("mapview")
 library("leaflet")
@@ -1287,6 +1283,10 @@ points <- pts_snap_sf %>% st_transform(crs = '+proj=longlat +ellps=WGS84 +datum=
 points <- st_coordinates(points)
 
 lines <- slsc_layer %>% st_transform(crs = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
+
+st_write(lines, "ensemble.geojson", 
+         delete_dsn=FALSE, 
+         update = TRUE )
 
 map <- leaflet(data = points) %>% addTiles() %>%
   addMarkers() %>%
