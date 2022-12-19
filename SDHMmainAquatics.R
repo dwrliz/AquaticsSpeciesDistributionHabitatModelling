@@ -1280,7 +1280,9 @@ points <- pts_snap_sf %>% st_transform(crs = '+proj=longlat +ellps=WGS84 +datum=
 points <- st_coordinates(points)
 
 lines <- slsc_layer %>% st_transform(crs = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
-lines <- lines[,(ncol(lines)-12):ncol(lines)]
+lines <- lines[,(ncol(lines)-12):ncol(lines)]%>% 
+  arrange(desc(Ensemble_ave)) %>%
+  head(20000) #must limit output
 
 st_write(lines, "ensemble.geojson", 
          delete_dsn=FALSE, 
