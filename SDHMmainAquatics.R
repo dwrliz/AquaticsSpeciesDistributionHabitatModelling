@@ -3,7 +3,7 @@
 # This script requires a functions script titled "SDHMfunctions"
 # This script is designed to create ensemble species distribution models from presence point data and predictor layers
 # Written by William Wiskes 
-# Last update 12/10/2022
+# Last update 12/31/2022
 # ---
 
 library(sp)
@@ -1280,9 +1280,12 @@ points <- pts_snap_sf %>% st_transform(crs = '+proj=longlat +ellps=WGS84 +datum=
 points <- st_coordinates(points)
 
 lines <- slsc_layer %>% st_transform(crs = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs')
-lines <- lines[,(ncol(lines)-12):ncol(lines)]%>% 
-  arrange(desc(Ensemble_ave)) %>%
-  head(20000) #must limit output
+lines <- lines[,(ncol(lines)-12):ncol(lines)] #limit columns
+#because of how R handles deleting and replacing data, the only way
+#to keep file size small (less than 150K kb required) is to manually
+#delete the old ensemble.geojson before running this step, or else,
+#for some reason beyond me, R will make a larger file?? 
+st_write(lines, "ensemble.geojson")
 
 st_write(lines, "ensemble.geojson", 
          delete_dsn=FALSE, 
